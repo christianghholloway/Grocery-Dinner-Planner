@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Christian & Katie's Dinner Planner</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .transition-all { transition: all 0.2s ease-in-out; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen pb-24">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-md mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-base font-bold flex items-center gap-2">
+                <i class="fa-solid fa-heart text-rose-300"></i> Christian & Katie's Dinners
+            </h1>
+            <div class="flex items-center gap-1">
+                <button onclick="generateGroceryList()" title="Auto-Sync Grocery List" class="bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1">
+                    <i class="fa-solid fa-sync text-xs"></i> Sync
+                </button>
+                <button onclick="openSettingsModal()" class="text-white hover:text-emerald-100 transition-all p-2">
+                    <i class="fa-solid fa-gear text-base"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-md mx-auto p-4 space-y-4">
+
+        <!-- TAB 1: MEAL PLANNER -->
+        <section id="tab-planner" class="tab-content active space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-base font-bold">Weekly Meal Plan</h2>
+                    <p class="text-xs text-slate-500">Tap any day to assign a dinner & chef</p>
+                </div>
+                <div class="flex items-center gap-2 text-[11px] font-medium text-slate-500">
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span> Christian</span>
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Katie</span>
+                </div>
+            </div>
+
+            <!-- Days List -->
+            <div id="weekly-plan-container" class="space-y-3">
+                <!-- Dynamically populated by JS -->
+            </div>
+        </section>
+
+        <!-- TAB 2: RECIPE BOOK -->
+        <section id="tab-recipes" class="tab-content space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-base font-bold">Recipe Book</h2>
+                    <p class="text-xs text-slate-500">Saved meals & ingredients</p>
+                </div>
+                <button onclick="openRecipeModal()" class="bg-emerald-600 text-white text-xs font-semibold px-3 py-2 rounded-xl shadow-sm hover:bg-emerald-700 transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> New Recipe
+                </button>
+            </div>
+
+            <!-- Search Recipe -->
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <i class="fa-solid fa-search text-xs"></i>
+                </span>
+                <input type="text" id="recipe-search" oninput="filterRecipes()" placeholder="Search recipes..." class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+
+            <!-- Recipes Container -->
+            <div id="recipes-container" class="space-y-3">
+                <!-- Dynamically populated by JS -->
+            </div>
+        </section>
+
+        <!-- TAB 3: GROCERY LIST -->
+        <section id="tab-grocery" class="tab-content space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-base font-bold">Grocery List</h2>
+                    <p class="text-xs text-slate-500">Synced from this week's dinner menu</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="clearCheckedItems()" class="text-xs text-slate-500 hover:text-red-600 px-2 py-1 transition-all">Clear Checked</button>
+                    <button onclick="openManualItemModal()" class="bg-emerald-600 text-white text-xs font-semibold px-3 py-2 rounded-xl shadow-sm hover:bg-emerald-700 transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="flex gap-1 bg-slate-200 p-1 rounded-xl text-xs font-medium">
+                <button onclick="setGroceryFilter('all')" id="g-filter-all" class="flex-1 py-1.5 rounded-lg bg-white shadow-sm transition-all text-center">All</button>
+                <button onclick="setGroceryFilter('unchecked')" id="g-filter-unchecked" class="flex-1 py-1.5 rounded-lg text-slate-600 transition-all text-center">Active</button>
+                <button onclick="setGroceryFilter('checked')" id="g-filter-checked" class="flex-1 py-1.5 rounded-lg text-slate-600 transition-all text-center">Done</button>
+            </div>
+
+            <!-- Grocery Items Container -->
+            <div id="grocery-container" class="space-y-3">
+                <!-- Dynamically populated by JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar for Mobile -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 max-w-md mx-auto z-30 shadow-lg">
+        <div class="flex justify-around py-2">
+            <button onclick="switchTab('planner')" id="nav-planner" class="flex flex-col items-center flex-1 py-1 text-emerald-600 transition-all">
+                <i class="fa-solid fa-calendar-days text-lg"></i>
+                <span class="text-[10px] font-medium mt-1">Planner</span>
+            </button>
+            <button onclick="switchTab('recipes')" id="nav-recipes" class="flex flex-col items-center flex-1 py-1 text-slate-400 hover:text-slate-600 transition-all">
+                <i class="fa-solid fa-book-open text-lg"></i>
+                <span class="text-[10px] font-medium mt-1">Recipes</span>
+            </button>
+            <button onclick="switchTab('grocery')" id="nav-grocery" class="flex flex-col items-center flex-1 py-1 text-slate-400 hover:text-slate-600 transition-all relative">
+                <i class="fa-solid fa-basket-shopping text-lg"></i>
+                <span class="text-[10px] font-medium mt-1">Grocery</span>
+                <span id="grocery-badge" class="absolute top-1 right-8 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full hidden">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MODAL: Assign Meal & Chef to Day -->
+    <div id="assign-modal" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 max-h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-200">
+            <div class="flex justify-between items-center mb-3">
+                <h3 id="assign-modal-title" class="text-sm font-bold">Assign Dinner</h3>
+                <button onclick="closeModal('assign-modal')" class="text-slate-400 hover:text-slate-600 p-2"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+            
+            <!-- Chef Selector -->
+            <div class="mb-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1.5">Who is cooking?</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="setModalChef('Christian')" id="chef-btn-Christian" class="py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 transition-all">Christian</button>
+                    <button type="button" onclick="setModalChef('Katie')" id="chef-btn-Katie" class="py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 transition-all">Katie</button>
+                    <button type="button" onclick="setModalChef('Together')" id="chef-btn-Together" class="py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 transition-all">Together</button>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <input type="text" id="assign-search" oninput="filterAssignRecipes()" placeholder="Search recipes..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+
+            <div id="assign-recipes-list" class="overflow-y-auto space-y-2 flex-1 pr-1 my-2">
+                <!-- Recipes list -->
+            </div>
+
+            <div class="pt-2 border-t border-slate-100 flex gap-2">
+                <button onclick="assignEmptyMeal()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all">Clear Day</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Add/Edit Recipe -->
+    <div id="recipe-modal" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 max-h-[90vh] overflow-y-auto flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center mb-3">
+                <h3 id="recipe-modal-title" class="text-sm font-bold">New Recipe</h3>
+                <button onclick="closeModal('recipe-modal')" class="text-slate-400 hover:text-slate-600 p-2"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+            <form id="recipe-form" onsubmit="saveRecipe(event)" class="space-y-3">
+                <input type="hidden" id="recipe-id">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Recipe Name</label>
+                    <input type="text" id="recipe-name" required placeholder="e.g., Chicken Fajitas" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Category</label>
+                    <select id="recipe-category" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="Quick & Easy">Quick & Easy</option>
+                        <option value="Mexican / Tacos">Mexican / Tacos</option>
+                        <option value="Pasta & Italian">Pasta & Italian</option>
+                        <option value="Healthy / Salad">Healthy / Salad</option>
+                        <option value="Asian / Stir Fry">Asian / Stir Fry</option>
+                        <option value="Comfort Food">Comfort Food</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-[11px] font-semibold text-slate-600">Ingredients (one per line or comma separated)</label>
+                    </div>
+                    <textarea id="recipe-ingredients" rows="5" required placeholder="1 lb chicken breast&#10;2 bell peppers&#10;1 packet taco seasoning" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('recipe-modal')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all">Cancel</button>
+                    <button type="submit" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-all">Save Recipe</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Add Manual Grocery Item -->
+    <div id="manual-item-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl space-y-3">
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-bold">Add Grocery Item</h3>
+                <button onclick="closeModal('manual-item-modal')" class="text-slate-400 hover:text-slate-600 p-2"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+            <form onsubmit="saveManualGroceryItem(event)" class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Item Name</label>
+                    <input type="text" id="manual-item-name" required placeholder="e.g., Coffee Beans" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Aisle / Category</label>
+                    <select id="manual-item-category" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="Produce">Produce</option>
+                        <option value="Dairy & Eggs">Dairy & Eggs</option>
+                        <option value="Meat & Seafood">Meat & Seafood</option>
+                        <option value="Pantry & Dry Goods">Pantry & Dry Goods</option>
+                        <option value="Bakery">Bakery</option>
+                        <option value="Frozen">Frozen</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('manual-item-modal')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all">Cancel</button>
+                    <button type="submit" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-all">Add Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Settings -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-bold">App Settings</h3>
+                <button onclick="closeModal('settings-modal')" class="text-slate-400 hover:text-slate-600 p-2"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+            <p class="text-xs text-slate-500">Data is stored locally on your device.</p>
+            <div class="space-y-2 pt-1">
+                <button onclick="loadSampleData()" class="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Load Sample Recipes & Plan
+                </button>
+                <button onclick="resetAllData()" class="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-trash-can"></i> Reset All Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white text-xs font-medium px-4 py-2.5 rounded-2xl shadow-2xl z-50 transition-all opacity-0 pointer-events-none">
+        Notification
+    </div>
+
+    <script>
+        const DAYS = [
+            { id: 'mon', label: 'Monday' },
+            { id: 'tue', label: 'Tuesday' },
+            { id: 'wed', label: 'Wednesday' },
+            { id: 'thu', label: 'Thursday' },
+            { id: 'fri', label: 'Friday' },
+            { id: 'sat', label: 'Saturday' },
+            { id: 'sun', label: 'Sunday' }
+        ];
+
+        let state = {
+            recipes: [],
+            mealPlan: {
+                mon: { recipeId: null, chef: 'Christian' },
+                tue: { recipeId: null, chef: 'Katie' },
+                wed: { recipeId: null, chef: 'Christian' },
+                thu: { recipeId: null, chef: 'Katie' },
+                fri: { recipeId: null, chef: 'Together' },
+                sat: { recipeId: null, chef: 'Together' },
+                sun: { recipeId: null, chef: 'Christian' }
+            },
+            groceryList: [],
+            groceryFilter: 'all'
+        };
+
+        let currentAssignDay = null;
+        let selectedModalChef = 'Christian';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            if (state.recipes.length === 0) {
+                loadSampleData(false);
+            }
+            renderAll();
+        });
+
+        function saveToLocalStorage() {
+            localStorage.setItem('ck_dinner_planner_state', JSON.stringify(state));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('ck_dinner_planner_state');
+            if (saved) {
+                try {
+                    state = JSON.parse(saved);
+                } catch(e) {
+                    console.error('Error loading saved state', e);
+                }
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            ['planner', 'recipes', 'grocery'].forEach(t => {
+                const btn = document.getElementById(`nav-${t}`);
+                if (t === tabId) {
+                    btn.className = "flex flex-col items-center flex-1 py-1 text-emerald-600 transition-all";
+                } else {
+                    btn.className = "flex flex-col items-center flex-1 py-1 text-slate-400 hover:text-slate-600 transition-all";
+                }
+            });
+            window.scrollTo(0, 0);
+        }
+
+        function renderAll() {
+            renderMealPlan();
+            renderRecipes();
+            renderGroceryList();
+            updateGroceryBadge();
+        }
+
+        // --- MEAL PLANNER ---
+        function renderMealPlan() {
+            const container = document.getElementById('weekly-plan-container');
+            container.innerHTML = '';
+
+            DAYS.forEach(day => {
+                const dayData = state.mealPlan[day.id] || { recipeId: null, chef: 'Christian' };
+                const recipe = state.recipes.find(r => r.id === dayData.recipeId);
+                const chef = dayData.chef || 'Christian';
+
+                // Chef styling
+                let chefBg = 'bg-teal-50 text-teal-700 border-teal-200';
+                if (chef === 'Katie') chefBg = 'bg-rose-50 text-rose-700 border-rose-200';
+                if (chef === 'Together') chefBg = 'bg-purple-50 text-purple-700 border-purple-200';
+
+                const card = document.createElement('div');
+                card.className = "bg-white border border-slate-200 rounded-2xl p-3.5 shadow-sm transition-all";
+
+                if (recipe) {
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded">${day.label}</span>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${chefBg}">Chef: ${chef}</span>
+                                </div>
+                                <h3 class="text-sm font-bold text-slate-800">${escapeHtml(recipe.name)}</h3>
+                            </div>
+                            <button onclick="openAssignModal('${day.id}')" class="text-xs text-slate-400 hover:text-emerald-600 p-2"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                        <div class="text-xs text-slate-500 flex items-center justify-between pt-2 border-t border-slate-100">
+                            <span class="bg-slate-100 px-2 py-0.5 rounded text-[10px]">${escapeHtml(recipe.category)}</span>
+                            <span><i class="fa-solid fa-list-check text-[10px] mr-1"></i>${recipe.ingredients.length} items</span>
+                        </div>
+                    `;
+                } else {
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded">${day.label}</span>
+                                <p class="text-xs text-slate-400 mt-1 italic">No dinner assigned</p>
+                            </div>
+                            <button onclick="openAssignModal('${day.id}')" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1">
+                                <i class="fa-solid fa-plus"></i> Assign
+                            </button>
+                        </div>
+                    `;
+                }
+                container.appendChild(card);
+            });
+        }
+
+        function openAssignModal(dayId) {
+            currentAssignDay = dayId;
+            const dayObj = DAYS.find(d => d.id === dayId);
+            const dayData = state.mealPlan[dayId] || { chef: 'Christian' };
+            document.getElementById('assign-modal-title').innerText = `Assign Dinner for ${dayObj.label}`;
+            
+            setModalChef(dayData.chef || 'Christian');
+            document.getElementById('assign-search').value = '';
+            renderAssignRecipesList(state.recipes);
+            document.getElementById('assign-modal').classList.remove('hidden');
+        }
+
+        function setModalChef(chef) {
+            selectedModalChef = chef;
+            ['Christian', 'Katie', 'Together'].forEach(c => {
+                const btn = document.getElementById(`chef-btn-${c}`);
+                if (c === chef) {
+                    if (c === 'Christian') btn.className = "py-1.5 text-xs font-semibold rounded-lg border border-teal-500 bg-teal-50 text-teal-700 shadow-sm transition-all";
+                    else if (c === 'Katie') btn.className = "py-1.5 text-xs font-semibold rounded-lg border border-rose-500 bg-rose-50 text-rose-700 shadow-sm transition-all";
+                    else btn.className = "py-1.5 text-xs font-semibold rounded-lg border border-purple-500 bg-purple-50 text-purple-700 shadow-sm transition-all";
+                } else {
+                    btn.className = "py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 transition-all";
+                }
+            });
+            // Update live state chef if day is open
+            if (currentAssignDay) {
+                if (!state.mealPlan[currentAssignDay]) state.mealPlan[currentAssignDay] = { recipeId: null, chef };
+                else state.mealPlan[currentAssignDay].chef = chef;
+                saveToLocalStorage();
+                renderMealPlan();
+            }
+        }
+
+        function renderAssignRecipesList(recipesToRender) {
+            const container = document.getElementById('assign-recipes-list');
+            container.innerHTML = '';
+
+            if (recipesToRender.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">No recipes found. Create one first!</p>`;
+                return;
+            }
+
+            recipesToRender.forEach(recipe => {
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center p-3 bg-slate-50 hover:bg-emerald-50 border border-slate-100 rounded-xl cursor-pointer transition-all";
+                item.onclick = () => selectRecipeForDay(recipe.id);
+                item.innerHTML = `
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800">${escapeHtml(recipe.name)}</h4>
+                        <span class="text-[10px] text-slate-400">${escapeHtml(recipe.category)}</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-300"></i>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function filterAssignRecipes() {
+            const query = document.getElementById('assign-search').value.toLowerCase();
+            const filtered = state.recipes.filter(r => r.name.toLowerCase().includes(query) || r.category.toLowerCase().includes(query));
+            renderAssignRecipesList(filtered);
+        }
+
+        function selectRecipeForDay(recipeId) {
+            if (currentAssignDay) {
+                state.mealPlan[currentAssignDay] = {
+                    recipeId: recipeId,
+                    chef: selectedModalChef
+                };
+                saveToLocalStorage();
+                renderMealPlan();
+                closeModal('assign-modal');
+                showToast('Dinner assigned & synced!');
+                generateGroceryList(false); // auto sync grocery list on assign
+            }
+        }
+
+        function assignEmptyMeal() {
+            if (currentAssignDay) {
+                state.mealPlan[currentAssignDay] = { recipeId: null, chef: selectedModalChef };
+                saveToLocalStorage();
+                renderMealPlan();
+                closeModal('assign-modal');
+                showToast('Day cleared.');
+            }
+        }
+
+        // --- RECIPES ---
+        function renderRecipes() {
+            const container = document.getElementById('recipes-container');
+            container.innerHTML = '';
+
+            if (state.recipes.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 bg-white border border-dashed border-slate-200 rounded-2xl p-6">
+                        <i class="fa-solid fa-book-bookmark text-3xl text-slate-300 mb-2"></i>
+                        <h3 class="text-xs font-bold text-slate-700">No recipes yet</h3>
+                        <p class="text-xs text-slate-400 mt-1 mb-3">Add recipes with ingredients to build your meal plans.</p>
+                        <button onclick="openRecipeModal()" class="bg-emerald-600 text-white text-xs font-semibold px-3 py-2 rounded-xl shadow-sm">Add Recipe</button>
+                    </div>
+                `;
+                return;
+            }
+
+            state.recipes.forEach(recipe => {
+                const card = document.createElement('div');
+                card.className = "bg-white border border-slate-200 rounded-2xl p-4 shadow-sm transition-all";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">${escapeHtml(recipe.category)}</span>
+                            <h3 class="text-sm font-bold text-slate-800 mt-1.5">${escapeHtml(recipe.name)}</h3>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="openRecipeModal('${recipe.id}')" class="text-xs text-slate-400 hover:text-emerald-600 p-2"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteRecipe('${recipe.id}')" class="text-xs text-slate-400 hover:text-red-600 p-2"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-600 mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <span class="font-semibold text-slate-700 block mb-1">Ingredients:</span>
+                        <p class="whitespace-pre-line text-slate-500 text-[11px]">${escapeHtml(recipe.ingredients.join('\n'))}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterRecipes() {
+            const query = document.getElementById('recipe-search').value.toLowerCase();
+            const container = document.getElementById('recipes-container');
+            const filtered = state.recipes.filter(r => r.name.toLowerCase().includes(query) || r.category.toLowerCase().includes(query));
+            
+            container.innerHTML = '';
+            filtered.forEach(recipe => {
+                const card = document.createElement('div');
+                card.className = "bg-white border border-slate-200 rounded-2xl p-4 shadow-sm transition-all";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">${escapeHtml(recipe.category)}</span>
+                            <h3 class="text-sm font-bold text-slate-800 mt-1.5">${escapeHtml(recipe.name)}</h3>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="openRecipeModal('${recipe.id}')" class="text-xs text-slate-400 hover:text-emerald-600 p-2"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteRecipe('${recipe.id}')" class="text-xs text-slate-400 hover:text-red-600 p-2"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-600 mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <span class="font-semibold text-slate-700 block mb-1">Ingredients:</span>
+                        <p class="whitespace-pre-line text-slate-500 text-[11px]">${escapeHtml(recipe.ingredients.join('\n'))}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openRecipeModal(recipeId = null) {
+            document.getElementById('recipe-form').reset();
+            document.getElementById('recipe-id').value = '';
+            if (recipeId) {
+                document.getElementById('recipe-modal-title').innerText = 'Edit Recipe';
+                const recipe = state.recipes.find(r => r.id === recipeId);
+                if (recipe) {
+                    document.getElementById('recipe-id').value = recipe.id;
+                    document.getElementById('recipe-name').value = recipe.name;
+                    document.getElementById('recipe-category').value = recipe.category;
+                    document.getElementById('recipe-ingredients').value = recipe.ingredients.join('\n');
+                }
+            } else {
+                document.getElementById('recipe-modal-title').innerText = 'New Recipe';
+            }
+            document.getElementById('recipe-modal').classList.remove('hidden');
+        }
+
+        function saveRecipe(e) {
+            e.preventDefault();
+            const id = document.getElementById('recipe-id').value || 'rec_' + Date.now();
+            const name = document.getElementById('recipe-name').value.trim();
+            const category = document.getElementById('recipe-category').value;
+            const ingredientsRaw = document.getElementById('recipe-ingredients').value;
+
+            // Split by newline or comma
+            const ingredients = ingredientsRaw.split(/[\n,]+/).map(i => i.trim()).filter(i => i.length > 0);
+
+            const existingIndex = state.recipes.findIndex(r => r.id === id);
+            if (existingIndex >= 0) {
+                state.recipes[existingIndex] = { id, name, category, ingredients };
+                showToast('Recipe updated!');
+            } else {
+                state.recipes.push({ id, name, category, ingredients });
+                showToast('Recipe saved!');
+            }
+
+            saveToLocalStorage();
+            renderRecipes();
+            renderMealPlan();
+            closeModal('recipe-modal');
+        }
+
+        function deleteRecipe(recipeId) {
+            if (confirm("Delete this recipe?")) {
+                state.recipes = state.recipes.filter(r => r.id !== recipeId);
+                Object.keys(state.mealPlan).forEach(day => {
+                    if (state.mealPlan[day] && state.mealPlan[day].recipeId === recipeId) {
+                        state.mealPlan[day].recipeId = null;
+                    }
+                });
+                saveToLocalStorage();
+                renderAll();
+                showToast('Recipe deleted.');
+            }
+        }
+
+        // --- GROCERY LIST AUTO-SYNC ---
+        function generateGroceryList(showNotification = true) {
+            // Collect planned recipe IDs
+            const plannedRecipeIds = Object.values(state.mealPlan)
+                .map(m => m && m.recipeId)
+                .filter(id => id !== null);
+
+            if (plannedRecipeIds.length === 0) {
+                if (showNotification) showToast('No dinners planned yet!');
+                return;
+            }
+
+            // Retain manual items
+            const manualItems = state.groceryList.filter(item => item.manual);
+            
+            let generatedItems = [];
+            plannedRecipeIds.forEach(recipeId => {
+                const recipe = state.recipes.find(r => r.id === recipeId);
+                if (recipe && recipe.ingredients) {
+                    recipe.ingredients.forEach(ing => {
+                        // Prevent duplicate active ingredients if already present
+                        const normalized = ing.toLowerCase().trim();
+                        const category = guessCategory(normalized);
+                        generatedItems.push({
+                            id: 'g_' + Math.random().toString(36).substr(2, 9),
+                            name: ing,
+                            category: category,
+                            checked: false,
+                            manual: false
+                        });
+                    });
+                }
+            });
+
+            // Combine manual and auto-generated items
+            state.groceryList = [...manualItems, ...generatedItems];
+            saveToLocalStorage();
+            renderGroceryList();
+            updateGroceryBadge();
+            if (showNotification) {
+                showToast('Grocery list synced with weekly dinners!');
+                switchTab('grocery');
+            }
+        }
+
+        function guessCategory(ing) {
+            if (/apple|banana|orange|lemon|lime|avocado|tomato|onion|garlic|lettuce|spinach|carrot|potato|pepper|mushroom|cilantro|herb|produce/i.test(ing)) return 'Produce';
+            if (/milk|cheese|butter|cream|yogurt|egg|sour cream/i.test(ing)) return 'Dairy & Eggs';
+            if (/chicken|beef|pork|steak|bacon|sausage|fish|salmon|shrimp|meat/i.test(ing)) return 'Meat & Seafood';
+            if (/bread|tortilla|bun|pita|bakery/i.test(ing)) return 'Bakery';
+            if (/frozen|ice cream/i.test(ing)) return 'Frozen';
+            return 'Pantry & Dry Goods';
+        }
+
+        function renderGroceryList() {
+            const container = document.getElementById('grocery-container');
+            container.innerHTML = '';
+
+            let filtered = state.groceryList;
+            if (state.groceryFilter === 'unchecked') {
+                filtered = state.groceryList.filter(i => !i.checked);
+            } else if (state.groceryFilter === 'checked') {
+                filtered = state.groceryList.filter(i => i.checked);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 bg-white border border-dashed border-slate-200 rounded-2xl p-6">
+                        <i class="fa-solid fa-basket-shopping text-3xl text-slate-300 mb-2"></i>
+                        <h3 class="text-xs font-bold text-slate-700">Grocery list is empty</h3>
+                        <p class="text-xs text-slate-400 mt-1 mb-4">Tap "Sync" at the top or add items manually.</p>
+                        <button onclick="openManualItemModal()" class="bg-emerald-600 text-white text-xs font-semibold px-3 py-2 rounded-xl shadow-sm">Add Item</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group by category
+            const categories = {};
+            filtered.forEach(item => {
+                const cat = item.category || 'Other';
+                if (!categories[cat]) categories[cat] = [];
+                categories[cat].push(item);
+            });
+
+            Object.keys(categories).sort().forEach(cat => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = "mb-3";
+                groupDiv.innerHTML = `<h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-1">${cat}</h4>`;
+
+                const itemsList = document.createElement('div');
+                itemsList.className = "space-y-1.5";
+
+                categories[cat].forEach(item => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = `flex items-center justify-between p-3 bg-white border ${item.checked ? 'border-slate-100 bg-slate-50 opacity-60' : 'border-slate-200 shadow-sm'} rounded-xl transition-all`;
+                    itemEl.innerHTML = `
+                        <label class="flex items-center gap-3 cursor-pointer flex-1 select-none">
+                            <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleGroceryItem('${item.id}')" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 accent-emerald-600">
+                            <span class="text-xs font-medium ${item.checked ? 'line-through text-slate-400' : 'text-slate-800'}">${escapeHtml(item.name)}</span>
+                        </label>
+                        <div class="flex items-center gap-1">
+                            ${item.manual ? '<span class="text-[9px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">custom</span>' : ''}
+                            <button onclick="deleteGroceryItem('${item.id}')" class="text-xs text-slate-300 hover:text-red-500 p-1.5"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    `;
+                    itemsList.appendChild(itemEl);
+                });
+
+                groupDiv.appendChild(itemsList);
+                container.appendChild(groupDiv);
+            });
+        }
+
+        function setGroceryFilter(filter) {
+            state.groceryFilter = filter;
+            ['all', 'unchecked', 'checked'].forEach(f => {
+                const btn = document.getElementById(`g-filter-${f}`);
+                if (f === filter) {
+                    btn.className = "flex-1 py-1.5 rounded-lg bg-white shadow-sm transition-all text-center font-bold text-slate-800";
+                } else {
+                    btn.className = "flex-1 py-1.5 rounded-lg text-slate-600 transition-all text-center";
+                }
+            });
+            renderGroceryList();
+        }
+
+        function toggleGroceryItem(id) {
+            const item = state.groceryList.find(i => i.id === id);
+            if (item) {
+                item.checked = !item.checked;
+                saveToLocalStorage();
+                renderGroceryList();
+                updateGroceryBadge();
+            }
+        }
+
+        function deleteGroceryItem(id) {
+            state.groceryList = state.groceryList.filter(i => i.id !== id);
+            saveToLocalStorage();
+            renderGroceryList();
+            updateGroceryBadge();
+        }
+
+        function clearCheckedItems() {
+            state.groceryList = state.groceryList.filter(i => !i.checked);
+            saveToLocalStorage();
+            renderGroceryList();
+            updateGroceryBadge();
+            showToast('Checked items cleared.');
+        }
+
+        function updateGroceryBadge() {
+            const uncheckedCount = state.groceryList.filter(i => !i.checked).length;
+            const badge = document.getElementById('grocery-badge');
+            if (uncheckedCount > 0) {
+                badge.innerText = uncheckedCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function openManualItemModal() {
+            document.getElementById('manual-item-name').value = '';
+            document.getElementById('manual-item-modal').classList.remove('hidden');
+        }
+
+        function saveManualGroceryItem(e) {
+            e.preventDefault();
+            const name = document.getElementById('manual-item-name').value.trim();
+            const category = document.getElementById('manual-item-category').value;
+
+            if (name) {
+                state.groceryList.push({
+                    id: 'g_' + Math.random().toString(36).substr(2, 9),
+                    name: name,
+                    category: category,
+                    checked: false,
+                    manual: true
+                });
+                saveToLocalStorage();
+                renderGroceryList();
+                updateGroceryBadge();
+                closeModal('manual-item-modal');
+                showToast('Item added.');
+            }
+        }
+
+        // --- SETTINGS / SAMPLES ---
+        function openSettingsModal() {
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+
+        function loadSampleData(showMsg = true) {
+            state.recipes = [
+                {
+                    id: 'rec_1',
+                    name: 'Creamy Garlic Parmesan Pasta',
+                    category: 'Pasta & Italian',
+                    ingredients: ['1 lb spaghetti', '2 cloves garlic', '1 cup heavy cream', '1 cup parmesan', '2 tbsp butter']
+                },
+                {
+                    id: 'rec_2',
+                    name: 'Crispy Chicken Fajitas',
+                    category: 'Mexican / Tacos',
+                    ingredients: ['1 lb chicken breast', '2 bell peppers', '1 onion', '1 pack tortillas', '1 packet taco seasoning']
+                },
+                {
+                    id: 'rec_3',
+                    name: 'Lemon Herb Salmon & Asparagus',
+                    category: 'Healthy / Salad',
+                    ingredients: ['2 salmon fillets', '1 bunch asparagus', '1 lemon', '3 tbsp olive oil']
+                },
+                {
+                    id: 'rec_4',
+                    name: 'Beef & Broccoli Stir Fry',
+                    category: 'Asian / Stir Fry',
+                    ingredients: ['1 lb flank steak', '2 cups broccoli florets', '1/4 cup soy sauce', '2 tbsp sesame oil']
+                }
+            ];
+
+            state.mealPlan = {
+                mon: { recipeId: 'rec_1', chef: 'Christian' },
+                tue: { recipeId: 'rec_2', chef: 'Katie' },
+                wed: { recipeId: 'rec_3', chef: 'Christian' },
+                thu: { recipeId: 'rec_4', chef: 'Katie' },
+                fri: { recipeId: null, chef: 'Together' },
+                sat: { recipeId: null, chef: 'Together' },
+                sun: { recipeId: null, chef: 'Christian' }
+            };
+
+            state.groceryList = [
+                { id: 'g_1', name: 'Olive oil', category: 'Pantry & Dry Goods', checked: false, manual: true }
+            ];
+
+            saveToLocalStorage();
+            renderAll();
+            closeModal('settings-modal');
+            generateGroceryList(false);
+            if (showMsg) showToast('Sample data loaded for Christian & Katie!');
+        }
+
+        function resetAllData() {
+            if (confirm("Are you sure you want to reset all data?")) {
+                localStorage.removeItem('ck_dinner_planner_state');
+                state = {
+                    recipes: [],
+                    mealPlan: {
+                        mon: { recipeId: null, chef: 'Christian' },
+                        tue: { recipeId: null, chef: 'Katie' },
+                        wed: { recipeId: null, chef: 'Christian' },
+                        thu: { recipeId: null, chef: 'Katie' },
+                        fri: { recipeId: null, chef: 'Together' },
+                        sat: { recipeId: null, chef: 'Together' },
+                        sun: { recipeId: null, chef: 'Christian' }
+                    },
+                    groceryList: [],
+                    groceryFilter: 'all'
+                };
+                renderAll();
+                closeModal('settings-modal');
+                showToast('All data reset.');
+            }
+        }
+
+        // --- UTILS ---
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace("'", '&#039;');
+        }
+    </script>
+</body>
+</html>
